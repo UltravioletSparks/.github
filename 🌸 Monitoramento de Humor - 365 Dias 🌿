@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 Monitoramento de Humor - 365 Dias 🌿</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastelPink: {
+                            50: '#fff5f7',
+                            100: '#ffe3eb',
+                            200: '#ffc9d8',
+                            300: '#ffa1b8',
+                            400: '#f77195',
+                            500: '#e84575',
+                        },
+                        pastelGreen: {
+                            50: '#f0fdf6',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                        },
+                        cuteTheme: {
+                            bg: '#fbf7f9',
+                            card: '#ffffff',
+                            text: '#4a3e47',
+                            subtext: '#7e6b78',
+                            border: '#f1d8e2',
+                            greenBorder: '#cbebd8',
+                            pinkAccent: '#fce4ec',
+                            greenAccent: '#e8f6ef',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f7f3f6;
+            color: #4a3e47;
+        }
+
+        /* Checkbox & Radios Personalizados */
+        .cute-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #e2b8c8;
+            border-radius: 0.375rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background-color: #fff;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .cute-checkbox:checked {
+            background-color: #f0789a;
+            border-color: #f0789a;
+        }
+
+        .cute-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .cute-checkbox-green {
+            border-color: #a2dbb8;
+        }
+
+        .cute-checkbox-green:checked {
+            background-color: #4fc081;
+            border-color: #4fc081;
+        }
+
+        /* Botões de Escala de Humor */
+        .mood-btn {
+            transition: all 0.2s ease;
+            border-radius: 0.75rem;
+            font-weight: 700;
+        }
+        .mood-btn:hover {
+            transform: translateY(-2px);
+        }
+        .mood-btn.selected {
+           transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(232, 69, 117, 0.25), 0 0 0 3px rgba(232, 69, 117, 0.18);
+} 
+
+        /* Suporte para Impressão PDF formato A4 */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-card {
+                box-shadow: none !important;
+                border: 1px solid #f1d8e2 !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 1.2cm !important;
+                border-radius: 0 !important;
+            }
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-3 sm:px-6">
+
+    <!-- NAVEGAÇÃO E BARRAS SUPERIORES (NÃO IMPRIME) -->
+    <header class="no-print max-w-5xl mx-auto mb-6 space-y-3">
+        <!-- Topo Principal -->
+        <div class="bg-white/90 backdrop-blur-md border border-cuteTheme-border p-4 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Título & Indicador de Salvamento -->
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">🌿</span>
+                <div>
+                    <h1 class="font-extrabold text-lg sm:text-xl text-cuteTheme-text tracking-wide">Monitoramento de Humor</h1>
+                    <p class="text-xs text-cuteTheme-subtext flex items-center gap-1.5">
+                        <span id="save-status-dot" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                        <span id="save-status-text">Salvo automaticamente</span>
+                        <span class="mx-1">•</span>
+                        <span id="progress-count" class="font-bold text-pink-600">0/365 dias salvos</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Controles de Navegação dos 365 Dias -->
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                <button onclick="changeDay(-1)" class="p-2.5 bg-pastelPink-100 hover:bg-pastelPink-200 text-pastelPink-500 rounded-2xl transition text-sm font-bold">
+                    ← Ant
+                </button>
+
+                <div class="flex items-center gap-2 bg-cuteTheme-bg px-3 py-1.5 rounded-2xl border border-cuteTheme-border">
+                    <label for="day-select" class="text-xs font-bold text-cuteTheme-subtext">Dia:</label>
+                    <select id="day-select" onchange="goToDay(this.value)" class="bg-transparent text-sm font-extrabold text-cuteTheme-text focus:outline-none cursor-pointer">
+                        <!-- Gerado por JS -->
+                    </select>
+                    <input type="date" id="date-picker" onchange="goToDate(this.value)" class="bg-transparent text-xs text-cuteTheme-subtext cursor-pointer border-l border-cuteTheme-border pl-2 focus:outline-none">
+                </div>
+
+                <button onclick="changeDay(1)" class="p-2.5 bg-pastelPink-100 hover:bg-pastelPink-200 text-pastelPink-500 rounded-2xl transition text-sm font-bold">
+                    Próx →
+                </button>
+                <button onclick="goToToday()" class="px-3 py-2.5 bg-pastelGreen-200 hover:bg-pastelGreen-300 text-emerald-800 text-xs font-extrabold rounded-2xl transition">
+                    Hoje
+                </button>
+            </div>
+
+            <!-- Ações -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleAnnualModal()" class="px-3.5 py-2.5 bg-pastelGreen-100 hover:bg-pastelGreen-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-1.5 transition">
+                    📊 Visão Anual
+                </button>
+                <button onclick="window.print()" class="px-3 py-2.5 bg-pastelPink-100 hover:bg-pastelPink-200 text-pastelPink-500 rounded-2xl text-xs font-bold flex items-center gap-1 transition">
+                    🖨️ PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL (CARD/FOLHA A4) -->
+    <main class="print-card max-w-5xl mx-auto bg-white border border-cuteTheme-border rounded-3xl p-5 sm:p-8 shadow-xl shadow-pink-100/40 relative">
+        
+        <!-- Cabeçalho Bonito do Dia -->
+        <div class="text-center pb-5 border-b border-cuteTheme-border">
+            <div class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-pastelPink-100 to-pastelGreen-100 text-cuteTheme-text rounded-full text-xs font-bold mb-2">
+                🌸 Dia <span id="display-day-number">1</span> de 365 🌿
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-cuteTheme-text tracking-wide">
+                Monitoramento de Humor
+            </h1>
+        </div>
+
+        <!-- ESCALA DE HUMOR E REFERÊNCIA RÁPIDA -->
+        <section class="my-6">
+            <h2 class="text-xs font-extrabold uppercase tracking-wider text-cuteTheme-subtext mb-2.5 flex items-center gap-1.5">
+                💡 Guia da Escala de Humor (1 a 10)
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-center text-xs font-bold">
+                <div class="p-2.5 rounded-2xl bg-rose-100 border border-rose-200 text-rose-800">
+                    <span class="block text-sm font-black">1 - 3</span>
+                    <span class="font-medium text-[11px]">Depressão severa</span>
+                </div>
+                <div class="p-2.5 rounded-2xl bg-amber-100 border border-amber-200 text-amber-800">
+                    <span class="block text-sm font-black">4 - 5</span>
+                    <span class="font-medium text-[11px]">Depressão moderada</span>
+                </div>
+                <div class="p-2.5 rounded-2xl bg-emerald-100 border border-emerald-200 text-emerald-800">
+                    <span class="block text-sm font-black">6</span>
+                    <span class="font-medium text-[11px]">Estável</span>
+                </div>
+                <div class="p-2.5 rounded-2xl bg-sky-100 border border-sky-200 text-sky-800">
+                    <span class="block text-sm font-black">7 - 8</span>
+                    <span class="font-medium text-[11px]">Hipomania leve</span>
+                </div>
+                <div class="p-2.5 rounded-2xl bg-purple-100 border border-purple-200 text-purple-800">
+                    <span class="block text-sm font-black">9 - 10</span>
+                    <span class="font-medium text-[11px]">Mania</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- REGISTRO DO DIA -->
+        <section class="space-y-6">
+
+            <!-- DATA, MEDICAÇÃO E SONO -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-cuteTheme-bg p-4 rounded-2xl border border-cuteTheme-border">
+                <!-- Data -->
+                <div>
+                    <label class="block text-xs font-extrabold text-cuteTheme-subtext mb-1">Data:</label>
+                    <input type="text" id="entry-date" placeholder="Ex: 28/09/2026" class="w-full bg-white border border-cuteTheme-border rounded-xl px-3 py-2 text-sm font-bold text-cuteTheme-text focus:outline-none focus:ring-2 focus:ring-pastelPink-300">
+                </div>
+
+                <!-- Horas de Sono -->
+                <div>
+                    <label class="block text-xs font-extrabold text-cuteTheme-subtext mb-1">Horas de Sono:</label>
+                    <input type="text" id="sleep-hours" placeholder="Ex: 7.5 horas" class="w-full bg-white border border-cuteTheme-border rounded-xl px-3 py-2 text-sm font-bold text-cuteTheme-text focus:outline-none focus:ring-2 focus:ring-pastelPink-300">
+                </div>
+
+                <!-- Medicação -->
+                <div class="flex items-center justify-start md:justify-center pt-2 md:pt-4">
+                    <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-xl border border-cuteTheme-border shadow-sm hover:bg-pastelGreen-50 transition">
+                        <input type="checkbox" id="meds-ok" class="cute-checkbox cute-checkbox-green">
+                        <span class="text-xs font-bold text-emerald-800">Medicação Ok / Conforme prescrita</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- SELETOR DE HUMOR (1 a 10) -->
+            <div class="bg-white p-4 rounded-2xl border border-cuteTheme-border space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-extrabold uppercase tracking-wider text-cuteTheme-subtext">Nível de Humor do Dia (1 a 10):</label>
+                    <span id="selected-mood-label" class="text-xs font-extrabold px-3 py-1 rounded-full bg-cuteTheme-bg text-cuteTheme-text border border-cuteTheme-border">
+                        Selecione um valor
+                    </span>
+                </div>
+                <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2">
+                    <button type="button" onclick="selectMood(1)" id="mood-btn-1" class="mood-btn py-2.5 bg-rose-100 text-rose-800 hover:bg-rose-200 text-sm">1</button>
+                    <button type="button" onclick="selectMood(2)" id="mood-btn-2" class="mood-btn py-2.5 bg-rose-100 text-rose-800 hover:bg-rose-200 text-sm">2</button>
+                    <button type="button" onclick="selectMood(3)" id="mood-btn-3" class="mood-btn py-2.5 bg-rose-100 text-rose-800 hover:bg-rose-200 text-sm">3</button>
+                    <button type="button" onclick="selectMood(4)" id="mood-btn-4" class="mood-btn py-2.5 bg-amber-100 text-amber-800 hover:bg-amber-200 text-sm">4</button>
+                    <button type="button" onclick="selectMood(5)" id="mood-btn-5" class="mood-btn py-2.5 bg-amber-100 text-amber-800 hover:bg-amber-200 text-sm">5</button>
+                    <button type="button" onclick="selectMood(6)" id="mood-btn-6" class="mood-btn py-2.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-sm">6</button>
+                    <button type="button" onclick="selectMood(7)" id="mood-btn-7" class="mood-btn py-2.5 bg-sky-100 text-sky-800 hover:bg-sky-200 text-sm">7</button>
+                    <button type="button" onclick="selectMood(8)" id="mood-btn-8" class="mood-btn py-2.5 bg-sky-100 text-sky-800 hover:bg-sky-200 text-sm">8</button>
+                    <button type="button" onclick="selectMood(9)" id="mood-btn-9" class="mood-btn py-2.5 bg-purple-100 text-purple-800 hover:bg-purple-200 text-sm">9</button>
+                    <button type="button" onclick="selectMood(10)" id="mood-btn-10" class="mood-btn py-2.5 bg-purple-100 text-purple-800 hover:bg-purple-200 text-sm">10</button>
+                </div>
+            </div>
+
+            <!-- TABELA / GRID COMPLETO DE SINTOMAS DIÁRIOS -->
+            <div class="bg-white p-4 rounded-2xl border border-cuteTheme-border space-y-4">
+                <h3 class="text-xs font-extrabold uppercase tracking-wider text-cuteTheme-subtext flex items-center gap-1.5">
+                    📋 Grid Completo de Sintomas do Dia
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- SINTOMAS DEPRESSIVOS -->
+                    <div class="bg-pastelPink-50/70 p-4 rounded-2xl border border-cuteTheme-border space-y-2.5">
+                        <span class="font-extrabold text-xs uppercase tracking-wider text-rose-800 flex items-center gap-1">
+                            🌸 Sintomas Depressivos
+                        </span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-tristeza" class="cute-checkbox"> Tristeza profunda
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-perda-interesse" class="cute-checkbox"> Perda de interesse
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-fadiga" class="cute-checkbox"> Fadiga
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-dif-concentracao" class="cute-checkbox"> Dificuldade de concentração
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-alt-apetite" class="cute-checkbox"> Alterações no apetite
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-hipersonia" class="cute-checkbox"> Hipersonia
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-culpa" class="cute-checkbox"> Culpa/Stmt. Inutilidade
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-pensamentos-morte" class="cute-checkbox"> Pensamentos de Morte
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-humor-deprimido" class="cute-checkbox"> Humor deprimido
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-insonia" class="cute-checkbox"> Insônia
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-desatencao" class="cute-checkbox"> Desatenção
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelPink-100">
+                                <input type="checkbox" id="symp-indecisao" class="cute-checkbox"> Indecisão
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- SINTOMAS MANÍACOS / ELEVADOS -->
+                    <div class="bg-pastelGreen-50/70 p-4 rounded-2xl border border-cuteTheme-greenBorder space-y-2.5">
+                        <span class="font-extrabold text-xs uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+                            🌿 Sintomas Maníacos / Elevados
+                        </span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-irritabilidade" class="cute-checkbox cute-checkbox-green"> Irritabilidade
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-aumento-energia" class="cute-checkbox cute-checkbox-green"> Aumento de Energia
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-euforia" class="cute-checkbox cute-checkbox-green"> Euforia Excessiva
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-motivacao-social" class="cute-checkbox cute-checkbox-green"> Motivação social/sxl
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-agitacao" class="cute-checkbox cute-checkbox-green"> Agitação
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-fala-acelerada" class="cute-checkbox cute-checkbox-green"> Fala Acelerada
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-pensamentos-rapidos" class="cute-checkbox cute-checkbox-green"> Pensamentos Rápidos
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-grandeza" class="cute-checkbox cute-checkbox-green"> Sntmt Grandeza
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-risco" class="cute-checkbox cute-checkbox-green"> Se pôr em Risco
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-impulsivos" class="cute-checkbox cute-checkbox-green"> Comportamentos Impulsivos
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer bg-white p-2 rounded-xl border border-pastelGreen-100">
+                                <input type="checkbox" id="symp-sono-reduzido" class="cute-checkbox cute-checkbox-green"> Sono Reduzido
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+<!-- CHECKLISTS RÁPIDOS PARA MONITORAR -->
+            <div class="bg-gradient-to-r from-pastelPink-50 to-pastelGreen-50 p-4 rounded-2xl border border-cuteTheme-border space-y-4">
+                <h3 class="text-xs font-extrabold uppercase tracking-wider text-cuteTheme-subtext flex items-center gap-1.5">
+                    🎯 Sintomas Principais para Monitorar
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Monitoramento Depressivo -->
+                    <div class="bg-white p-3.5 rounded-xl border border-pastelPink-200">
+                        <span class="font-bold text-xs text-rose-800 block mb-2">Sintomas Depressivos para Monitorar:</span>
+                        <div class="space-y-1.5 text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-dep-1" class="cute-checkbox"> Alterações no apetite
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-dep-2" class="cute-checkbox"> Perda de interesse
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-dep-3" class="cute-checkbox"> Tristeza profunda
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-dep-4" class="cute-checkbox"> Dificuldade de concentração
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-dep-5" class="cute-checkbox"> Alterações no sono
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Monitoramento Maníaco -->
+                    <div class="bg-white p-3.5 rounded-xl border border-pastelGreen-200">
+                        <span class="font-bold text-xs text-emerald-800 block mb-2">Sintomas Maníacos para Monitorar:</span>
+
+<div class="space-y-1.5 text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-man-1" class="cute-checkbox cute-checkbox-green"> Irritabilidade
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-man-2" class="cute-checkbox cute-checkbox-green"> Euforia excessiva
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-man-3" class="cute-checkbox cute-checkbox-green"> Fala acelerada
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-man-4" class="cute-checkbox cute-checkbox-green"> Agitação
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-man-5" class="cute-checkbox cute-checkbox-green"> Comportamentos impulsivos
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="mon-man-6" class="cute-checkbox cute-checkbox-green"> Pensamentos rápidos
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESCRIÇÃO / OBSERVAÇÕES DIÁRIAS -->
+            <div class="bg-white p-4 rounded-2xl border border-cuteTheme-border space-y-2">
+                <label class="text-xs font-extrabold uppercase tracking-wider text-cuteTheme-subtext block">
+                    📝 Descrição / Observações do Dia:
+                </label>
+                <textarea id="entry-description" rows="3" placeholder="Escreva aqui detalhes adicionais do seu dia, gatilhos, acontecimentos importantes..." class="w-full bg-cuteTheme-bg border border-cuteTheme-border rounded-xl p-3 text-xs sm:text-sm text-cuteTheme-text focus:outline-none focus:ring-2 focus:ring-pastelPink-300"></textarea>
+            </div>
+
+        </section>
+        <!-- RODAPÉ DA PÁGINA IMPRESSA -->
+        <footer class="mt-8 pt-4 border-t border-cuteTheme-border text-center text-xs text-cuteTheme-subtext flex justify-between items-center">
+            <span>Monitoramento de Humor • 365 Dias</span>
+            <span>Acompanhamento Pessoal</span>
+        </footer>
+    </main>
+
+    <!-- MODAL DE VISÃO ANUAL DOS 365 DIAS (NÃO IMPRIME) -->
+    <div id="annual-modal" class="no-print fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white max-w-4xl w-full max-h-[85vh] rounded-3xl p-6 shadow-2xl border border-cuteTheme-border flex flex-col space-y-4">
+            <div class="flex justify-between items-center border-b border-cuteTheme-border pb-3">
+                <h2 class="text-lg font-extrabold text-cuteTheme-text flex items-center gap-2">
+                    📊 Visão Anual do Humor (365 Dias)
+                </h2>
+                <button onclick="toggleAnnualModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
+            </div>
+
+            <p class="text-xs text-cuteTheme-subtext">Clique em qualquer dia registrado para abrir diretamente:</p>
+
+            <div class="overflow-y-auto flex-1 pr-2">
+                <div id="annual-grid" class="grid grid-cols-5 sm:grid-cols-10 md:grid-cols-12 gap-1.5 text-center text-xs">
+                    <!-- Gerado por JS -->
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-cuteTheme-border flex justify-between items-center">
+                <button onclick="exportData()" class="px-3.5 py-2 bg-pastelGreen-100 hover:bg-pastelGreen-200 text-emerald-800 rounded-xl text-xs font-bold transition">
+                    💾 Exportar Dados (JSON)
+                </button>
+                <button onclick="toggleAnnualModal()" class="px-4 py-2 bg-pastelPink-100 hover:bg-pastelPink-200 text-pastelPink-500 rounded-xl text-xs font-bold transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- SCRIPT DE LÓGICA & LOCALSTORAGE -->
+    <script>
+        let currentDay = 1;
+        const totalDays = 365;
+        let selectedMoodValue = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDaySelectOptions();
+            loadCurrentDay();
+            setupAutoSaveEvents();
+            updateProgressCount();
+        });
+
+        // Configura opções do Select
+        function setupDaySelectOptions() {
+            const select = document.getElementById('day-select');
+            select.innerHTML = '';
+            for (let i = 1; i <= totalDays; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Dia ${i}`;
+                select.appendChild(opt);
+            }
+        }
+
+        // Navegação de Dias
+        function changeDay(delta) {
+            let newDay = currentDay + delta;
+            if (newDay >= 1 && newDay <= totalDays) {
+                currentDay = newDay;
+                loadCurrentDay();
+            }
+        }
+
+        function goToDay(day) {
+            currentDay = parseInt(day, 10);
+            loadCurrentDay();
+        }
+
+        function goToToday() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const diff = now - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            let dayOfYear = Math.floor(diff / oneDay);
+            if (dayOfYear > 365) dayOfYear = 365;
+            if (dayOfYear < 1) dayOfYear = 1;
+            
+            currentDay = dayOfYear;
+            loadCurrentDay();
+        }
+
+        function goToDate(dateString) {
+            if (!dateString) return;
+            const selectedDate = new Date(dateString);
+            const start = new Date(selectedDate.getFullYear(), 0, 0);
+            const diff = selectedDate - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            let dayOfYear = Math.floor(diff / oneDay);
+            if (dayOfYear > 365) dayOfYear = 365;
+            if (dayOfYear < 1) dayOfYear = 1;
+
+            currentDay = dayOfYear;
+            loadCurrentDay();
+        }
+
+        // Seleção do Botão de Humor (1 a 10)
+        function selectMood(value) {
+            selectedMoodValue = value;
+            
+            // Remove seleção prévia
+            for (let i = 1; i <= 10; i++) {
+                const btn = document.getElementById(`mood-btn-${i}`);
+                if (btn) btn.classList.remove('selected', 'ring-2', 'ring-offset-1', 'ring-pink-400');
+            }
+
+            // Destaca botão atual
+            const activeBtn = document.getElementById(`mood-btn-${value}`);
+            if (activeBtn) {
+                activeBtn.classList.add('selected', 'ring-2', 'ring-offset-1', 'ring-pink-400');
+            }
+
+            // Rótulo explicativo
+            const label = document.getElementById('selected-mood-label');
+            let text = `Humor ${value}: `;
+            if (value <= 3) text += 'Depressão severa';
+            else if (value <= 5) text += 'Depressão moderada';
+            else if (value === 6) text += 'Estável';
+            else if (value <= 8) text += 'Hipomania leve';
+            else text += 'Mania';
+
+            label.textContent = text;
+            saveCurrentDay();
+        }
+// Carrega Dados do Dia Atual do LocalStorage
+        function loadCurrentDay() {
+            document.getElementById('day-select').value = currentDay;
+            document.getElementById('display-day-number').textContent = currentDay;
+
+            resetForm();
+
+            const savedData = localStorage.getItem(`mood_tracker_day_${currentDay}`);
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+
+                // Campos de Texto
+                Object.keys(data.inputs || {}).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = data.inputs[id];
+                });
+
+                // Checkboxes
+                Object.keys(data.checkboxes || {}).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.checked = data.checkboxes[id];
+                });
+
+                // Valor de Humor
+                if (data.mood) {
+                    selectMood(data.mood);
+                }
+            } else {
+                // Data formatada para novo registro
+                const todayFormatted = new Date().toLocaleDateString('pt-BR');
+                document.getElementById('entry-date').value = todayFormatted;
+            }
+        }
+
+        function resetForm() {
+            selectedMoodValue = null;
+            document.getElementById('selected-mood-label').textContent = 'Selecione um valor';
+            for (let i = 1; i <= 10; i++) {
+                const btn = document.getElementById(`mood-btn-${i}`);
+                if (btn) btn.classList.remove('selected', 'ring-2', 'ring-offset-1', 'ring-pink-400');
+            }
+            document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+        }
+
+        // Salva Automaticamente no LocalStorage
+        function saveCurrentDay() {
+            const inputs = {};
+            document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+                if (el.id) inputs[el.id] = el.value;
+            });
+const checkboxes = {};
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                if (el.id) checkboxes[el.id] = el.checked;
+            });
+
+            const dataToSave = {
+                dayNumber: currentDay,
+                mood: selectedMoodValue,
+                inputs,
+                checkboxes,
+                lastUpdated: new Date().toISOString()
+            };
+
+            localStorage.setItem(`mood_tracker_day_${currentDay}`, JSON.stringify(dataToSave));
+
+            // Feedback visual
+            const saveText = document.getElementById('save-status-text');
+            const saveDot = document.getElementById('save-status-dot');
+            
+            saveText.textContent = "Salvando...";
+            saveDot.className = "inline-block w-2.5 h-2.5 rounded-full bg-amber-400";
+            
+            setTimeout(() => {
+                saveText.textContent = "Salvo automaticamente";
+                saveDot.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-400";
+                updateProgressCount();
+            }, 300);
+        }
+
+        function setupAutoSaveEvents() {
+            document.querySelectorAll('input, textarea').forEach(element => {
+                element.addEventListener('input', saveCurrentDay);
+                element.addEventListener('change', saveCurrentDay);
+            });
+        }
+
+        function updateProgressCount() {
+            let count = 0;
+            for (let i = 1; i <= totalDays; i++) {
+                if (localStorage.getItem(`mood_tracker_day_${i}`)) {
+                    count++;
+                }
+            }
+            document.getElementById('progress-count').textContent = `${count}/365 dias preenchidos`;
+        }
+
+        // Modal Visão Anual
+        function toggleAnnualModal() {
+            const modal = document.getElementById('annual-modal');
+            if (modal.classList.contains('hidden')) {
+                renderAnnualGrid();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function renderAnnualGrid() {
+            const grid = document.getElementById('annual-grid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= totalDays; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'p-2 rounded-xl border text-[11px] font-bold transition flex flex-col items-center justify-center gap-1';
+                const saved = localStorage.getItem(`mood_tracker_day_${i}`);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    const mood = data.mood;
+                    
+                    let bgClass = 'bg-pastelGreen-100 border-pastelGreen-300 text-emerald-800';
+                    if (mood <= 3) bgClass = 'bg-rose-100 border-rose-300 text-rose-800';
+                    else if (mood <= 5) bgClass = 'bg-amber-100 border-amber-300 text-amber-800';
+                    else if (mood <= 8) bgClass = 'bg-sky-100 border-sky-300 text-sky-800';
+                    else if (mood >= 9) bgClass = 'bg-purple-100 border-purple-300 text-purple-800';
+
+                    btn.className += ` ${bgClass}`;
+                    btn.innerHTML = `<span>D${i}</span><span class="text-[9px] opacity-80">Humor ${mood || '-'}</span>`;
+                } else {
+                    btn.className += ' bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100';
+                    btn.innerHTML = `<span>D${i}</span><span class="text-[9px] opacity-50">-</span>`;
+                }
+
+                btn.onclick = () => {
+                    currentDay = i;
+                    loadCurrentDay();
+                    toggleAnnualModal();
+                };
+
+                grid.appendChild(btn);
+            }
+        }
+
+        // Exportação
+        function exportData() {
+            const allData = {};
+            for (let i = 1; i <= totalDays; i++) {
+                const dayData = localStorage.getItem(`mood_tracker_day_${i}`);
+                if (dayData) {
+                    allData[`dia_${i}`] = JSON.parse(dayData);
+                }
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `monitoramento_humor_365_dias_backup.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+</body>
+</html>
